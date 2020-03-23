@@ -11,9 +11,10 @@ import requests
 class PwnChk:
     """Check if you've been pwned"""
 
-    def __init__(self) -> None:
+    def __init__(self, padding: bool = True) -> None:
         self.session = requests.Session()
-        self.session.headers.update({"User-Agent": "pwnchk-alpha"})
+        self.session.headers.update({"User-Agent": "pwnchk-alpha",
+                                     "Add-Padding": str(padding).lower()})
         self.public_api_url = "https://api.pwnedpasswords.com/range/"
 
     def _get(self, url: str) -> requests.models.Response:
@@ -45,9 +46,11 @@ def main() -> None:
 
     parser = argparse.ArgumentParser(description="Check if you've been pwned")
     parser.add_argument("--email", type=str, help="not implemented")
+    parser.add_argument("--no-padding", action="store_true",
+                        help="don't add random padding to the response")
     args = parser.parse_args()
 
-    pwnchk = PwnChk()
+    pwnchk = PwnChk(padding=(not args.no_padding))
 
     if args.email:
         print("This API isn't public")
