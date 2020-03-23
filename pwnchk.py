@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
-"""Check if you're pwned"""
+"""Check if you've been pwned"""
 
 import getpass
+import argparse
 from hashlib import sha1
-from typing import Generator
+from typing import Iterator
+
 import requests
 
 class PwnChk:
-    """Check if you're pwned"""
+    """Check if you've been pwned"""
 
     def __init__(self) -> None:
         self.session = requests.Session()
@@ -24,7 +26,7 @@ class PwnChk:
         """Helper to get correctly formatted hash"""
         return sha1(string.encode()).hexdigest().upper()
 
-    def query_pw(self, prefix: str) -> Generator[bytes, None, None]:
+    def query_pw(self, prefix: str) -> Iterator[bytes]:
         """Send hash prefix to API and get an iterator of the response"""
         assert len(prefix) == 5
         response = self._get(self.public_api_url + prefix)
@@ -40,10 +42,9 @@ class PwnChk:
 
 def main() -> None:
     """Entry point"""
-    import argparse
 
     parser = argparse.ArgumentParser(description="Check if you've been pwned")
-    parser.add_argument("--email", type=str, help="Not implemented")
+    parser.add_argument("--email", type=str, help="not implemented")
     args = parser.parse_args()
 
     pwnchk = PwnChk()
@@ -55,7 +56,7 @@ def main() -> None:
         hits = pwnchk.number_of_hits(pw_hash)
 
         if hits:
-            print("{} appears {} times".format(pw_hash, hits))
+            print(f"{pw_hash} appears {hits} times")
         else:
             print("No matches")
 
