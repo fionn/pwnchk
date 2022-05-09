@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""Check if you've been pwned"""
+"""Check if your password has been pwned"""
 
+import sys
 import getpass
 import argparse
 from hashlib import sha1
@@ -9,7 +10,7 @@ from typing import Iterator
 import requests
 
 class PwnChk:
-    """Check if you've been pwned"""
+    """Check if your password has been pwned"""
 
     def __init__(self, padding: bool = True) -> None:
         self.session = requests.Session()
@@ -24,17 +25,17 @@ class PwnChk:
 
     @staticmethod
     def hash(string: str) -> str:
-        """Helper to get correctly formatted hash"""
-        return sha1(string.encode()).hexdigest().upper()
+        """Helper to hash a password"""
+        return sha1(string.encode()).hexdigest()
 
     def query_pw(self, prefix: str) -> Iterator[bytes]:
         """Send hash prefix to API and get an iterator of the response"""
         assert len(prefix) == 5
-        response = self._get(self.public_api_url + prefix)
-        return response.iter_lines()
+        return self._get(self.public_api_url + prefix).iter_lines()
 
-    def number_of_hits(self, pw_hash: str) -> int:
-        """Return frequency of occurrances"""
+    def hits(self, pw_hash: str) -> int:
+        """Frequency of occurrances"""
+        pw_hash = pw_hash.upper()
         prefix = pw_hash[:5]
         for line in self.query_pw(prefix):
             if pw_hash == prefix + line.decode().split(":")[0]:
@@ -44,24 +45,26 @@ class PwnChk:
 def main() -> None:
     """Entry point"""
 
-    parser = argparse.ArgumentParser(description="Check if you've been pwned")
-    parser.add_argument("--email", type=str, help="not implemented")
+    parser = argparse.ArgumentParser(description="Check if your password has been pwned")
+    parser.add_argument("--stdin", action="store_true", help="read from stdin")
     parser.add_argument("--no-padding", action="store_true",
                         help="don't add random padding to the response")
     args = parser.parse_args()
 
+    if args.stdin:
+        password = sys.stdin.read().strip()
+    else:
+        password=getpass.getpass()
+
     pwnchk = PwnChk(padding=(not args.no_padding))
 
-    if args.email:
-        print("This API isn't public")
-    else:
-        pw_hash = pwnchk.hash(getpass.getpass())
-        hits = pwnchk.number_of_hits(pw_hash)
+    pw_hash = pwnchk.hash(password)
+    hits = pwnchk.hits(pw_hash)
 
-        if hits:
-            print(f"{pw_hash} appears {hits} times")
-        else:
-            print("No matches")
+    if hits:
+        print(f"{pw_hash} appears {hits} times")
+    else:
+        print(f"{pw_hash} does not appear")
 
 if __name__ == "__main__":
     main()
