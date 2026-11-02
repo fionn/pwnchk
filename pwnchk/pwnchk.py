@@ -56,6 +56,7 @@ def main() -> None:
     else:
         password=getpass.getpass()
 
+    # pylint: disable=superfluous-parens
     pwnchk = PwnChk(padding=(not args.no_padding))
 
     pw_hash = pwnchk.hash(password)
